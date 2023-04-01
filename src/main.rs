@@ -1,19 +1,82 @@
 fn main() {
     let test_text = "1 20\n2 10\n\n2h 30m\n3:43 \n\n12h 20m\n14h 10\n\n11 40m\n1h 20m";
     let time_spans = text_to_time_spans(test_text);
-    println!("{:#?}", time_spans);
+
+    for time_span in &time_spans {
+        println!(
+            "{:>7} - {:>7} => {}",
+            time_span.start.to_string(),
+            time_span.stop.to_string(),
+            time_span.duration().to_string()
+        )
+    }
+
+    println!();
+
+    let total_time = calculate_total_time(time_spans);
+    println!("Total time: {}h {}m", total_time.hours, total_time.minutes);
 }
 
 #[derive(Debug)]
 pub struct TimeStamp {
-    hours: i32,
-    minutes: i32,
+    pub hours: i32,
+    pub minutes: i32,
+}
+
+impl TimeStamp {
+    pub fn from_minutes(minutes: i32) -> TimeStamp {
+        let hours = minutes / 60;
+
+        return TimeStamp {
+            hours: hours,
+            minutes: minutes - hours * 60,
+        };
+    }
+
+    pub fn to_minutes(&self) -> i32 {
+        return self.hours * 60 + self.minutes;
+    }
+
+    pub fn to_string(&self) -> String {
+        if self.hours != 0 && self.minutes != 0 {
+            return format!("{}h {}m", self.hours, self.minutes);
+        } else if self.hours == 0 {
+            return format!("{}m", self.minutes);
+        } else {
+            return format!("{}h", self.hours);
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct TimeSpan {
-    start: TimeStamp,
-    stop: TimeStamp,
+    pub start: TimeStamp,
+    pub stop: TimeStamp,
+}
+
+impl TimeSpan {
+    pub fn duration(&self) -> TimeStamp {
+        let mut stop_h = self.stop.hours;
+        let stop_m = self.stop.minutes;
+
+        while stop_h < self.start.hours {
+            stop_h += 12;
+        }
+
+        let total_minutes = (stop_h * 60 + stop_m) - self.start.to_minutes();
+        return TimeStamp::from_minutes(total_minutes);
+    }
+}
+
+fn calculate_total_time(time_spans: Vec<TimeSpan>) -> TimeStamp {
+    let mut total_minutes = 0;
+
+    for time_span in time_spans {
+        total_minutes += time_span.duration().to_minutes();
+    }
+
+    let result = TimeStamp::from_minutes(total_minutes);
+    return result;
 }
 
 fn text_to_time_spans(text: &str) -> Vec<TimeSpan> {
@@ -24,10 +87,12 @@ fn text_to_time_spans(text: &str) -> Vec<TimeSpan> {
     for pair in timestamp_pairs {
         let start = parse_timestamp(pair.0).unwrap();
         let stop = parse_timestamp(pair.1).unwrap();
+
         let time_span = TimeSpan {
             start: start,
             stop: stop,
         };
+
         time_spans.push(time_span)
     }
 
