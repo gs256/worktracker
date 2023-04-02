@@ -1,5 +1,8 @@
+use std::io::stdin;
+use std::io::Read;
+
 fn main() {
-    let test_text = "1 20\n2 10\n\n2h 30m\n3:43 \n\n12h 20m\n14h 10\n\n11 40m\n1h 20m";
+    let test_text = &input();
     let time_spans = text_to_time_spans(test_text);
 
     for time_span in &time_spans {
@@ -15,6 +18,13 @@ fn main() {
 
     let total_time = calculate_total_time(time_spans);
     println!("Total time: {}h {}m", total_time.hours, total_time.minutes);
+}
+
+fn input() -> String {
+    let mut buffer = String::new();
+    buffer.clear();
+    stdin().lock().read_to_string(&mut buffer).unwrap();
+    return buffer.clone();
 }
 
 #[derive(Debug)]
